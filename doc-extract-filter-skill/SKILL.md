@@ -5,7 +5,7 @@
 ### 基本信息
 - **name**: doc-extract-filter
 - **description**: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选
-- **version**: 1.0.0
+- **version**: 1.0.2
 - **author**: file-agent team
 - **license**: MIT-0
 
@@ -14,7 +14,7 @@
 {
   "name": "doc-extract-filter",
   "description": "文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "file-agent team",
   "license": "MIT-0",
   "type": "tool",
@@ -43,7 +43,7 @@
 ```yaml
 name: doc-extract-filter
 description: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选
-version: 1.0.0
+version: 1.0.2
 author: file-agent team
 license: MIT-0
 type: tool
@@ -62,6 +62,9 @@ parameters:
     description: 关键词列表（仅 filter 操作需要）
     required: false
 ```
+
+## 更新说明
+- **版本 1.0.2**: 移除了未使用的依赖，优化了项目结构
 
 ## 使用说明
 

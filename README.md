@@ -101,6 +101,11 @@ doc-extract-filter/
 │       ├── filter.py     # 文本筛选模块
 │       ├── converter.py  # 格式转换模块
 │       └── utils.py      # 工具函数模块
+├── doc-extract-filter-skill/  # 技能配置文件夹
+│   ├── core/             # 技能核心代码
+│   ├── scripts/          # 技能脚本
+│   ├── SKILL.md          # 技能配置文件
+│   └── requirements.txt  # 技能依赖
 ├── tests/                # 单元测试
 │   ├── test_extractor.py
 │   ├── test_filter.py

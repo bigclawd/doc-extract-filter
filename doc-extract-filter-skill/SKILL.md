@@ -4,8 +4,8 @@
 
 ### 基本信息
 - **name**: doc-extract-filter
-- **description**: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选
-- **version**: 1.0.2
+- **description**: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词/正则表达式筛选
+- **version**: 1.0.3
 - **author**: file-agent team
 - **license**: MIT-0
 
@@ -13,8 +13,8 @@
 ```json
 {
   "name": "doc-extract-filter",
-  "description": "文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选",
-  "version": "1.0.2",
+  "description": "文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词/正则表达式筛选",
+  "version": "1.0.3",
   "author": "file-agent team",
   "license": "MIT-0",
   "type": "tool",
@@ -34,6 +34,11 @@
       "type": "array",
       "description": "关键词列表（仅 filter 操作需要）",
       "required": false
+    },
+    "regex": {
+      "type": "string",
+      "description": "正则表达式模式（仅 filter 操作需要）",
+      "required": false
     }
   }
 }
@@ -42,8 +47,8 @@
 ### CoPaw 配置
 ```yaml
 name: doc-extract-filter
-description: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词筛选
-version: 1.0.2
+description: 文件处理技能，支持 PDF、Word、Excel 文件的文本提取和关键词/正则表达式筛选
+version: 1.0.3
 author: file-agent team
 license: MIT-0
 type: tool
@@ -61,16 +66,21 @@ parameters:
     type: array
     description: 关键词列表（仅 filter 操作需要）
     required: false
+  regex:
+    type: string
+    description: 正则表达式模式（仅 filter 操作需要）
+    required: false
 ```
 
 ## 更新说明
+- **版本 1.0.3**: 添加了正则表达式筛选功能
 - **版本 1.0.2**: 移除了未使用的依赖，优化了项目结构
 
 ## 使用说明
 
 ### 功能
 - **extract**: 提取文件中的文本内容
-- **filter**: 提取文件中的文本并筛选包含指定关键词的内容
+- **filter**: 提取文件中的文本并筛选包含指定关键词或匹配正则表达式的内容
 
 ### 调用方式
 
@@ -78,6 +88,7 @@ parameters:
 ```bash
 python scripts/doc-extract-filter.py --file_path "path/to/file.pdf" --action "extract"
 python scripts/doc-extract-filter.py --file_path "path/to/file.pdf" --action "filter" --keywords "关键词1,关键词2"
+python scripts/doc-extract-filter.py --file_path "path/to/file.pdf" --action "filter" --regex "\\d{4}-\\d{2}-\\d{2}"
 ```
 
 #### Python 函数调用
@@ -89,6 +100,9 @@ result = DocExtractFilter.process("path/to/file.pdf", "extract")
 
 # 筛选关键词
 result = DocExtractFilter.process("path/to/file.pdf", "filter", ["关键词1", "关键词2"])
+
+# 使用正则表达式筛选
+result = DocExtractFilter.process("path/to/file.pdf", "filter", regex_pattern="\\d{4}-\\d{2}-\\d{2}")
 ```
 
 ### 返回格式

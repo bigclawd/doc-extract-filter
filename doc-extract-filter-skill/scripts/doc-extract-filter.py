@@ -31,7 +31,7 @@ class DocExtractFilter:
     """
     
     @staticmethod
-    def process(file_path, action, keywords=None):
+    def process(file_path, action, keywords=None, regex_pattern=None):
         """
         处理文件操作
         
@@ -39,6 +39,7 @@ class DocExtractFilter:
             file_path: 文件路径
             action: 操作类型，extract 或 filter
             keywords: 关键词列表，仅 filter 操作需要
+            regex_pattern: 正则表达式模式，仅 filter 操作需要
             
         Returns:
             结构化 JSON 格式的结果
@@ -79,15 +80,18 @@ class DocExtractFilter:
                     "error": ""
                 }
             elif action == "filter":
-                if not keywords:
+                if not keywords and not regex_pattern:
                     return {
                         "success": False,
                         "data": {},
-                        "error": "filter 操作需要提供关键词"
+                        "error": "filter 操作需要提供关键词或正则表达式"
                     }
                 
-                # 筛选关键词
-                filter_result = filter.filter_by_keyword(text, keywords)
+                # 筛选关键词或正则表达式
+                if keywords:
+                    filter_result = filter.filter_by_keyword(text, keywords)
+                else:
+                    filter_result = filter.filter_by_regex(text, regex_pattern)
                 
                 if filter_result.get("status") != "success":
                     return {
@@ -99,7 +103,10 @@ class DocExtractFilter:
                 # 构建筛选后的文本
                 filtered_text = ""
                 for result in filter_result.get("results", []):
-                    filtered_text += f"关键词: {result['keyword']}\n"
+                    if "keyword" in result:
+                        filtered_text += f"关键词: {result['keyword']}\n"
+                    else:
+                        filtered_text += f"正则表达式: {result['pattern']}\n"
                     filtered_text += f"匹配: {result['match']}\n"
                     filtered_text += f"上下文: {result['context']}\n"
                     filtered_text += "-" * 80 + "\n"
@@ -134,7 +141,8 @@ class DocExtractFilter:
 @click.option('--file_path', required=True, help='文件路径')
 @click.option('--action', required=True, type=click.Choice(['extract', 'filter']), help='操作类型')
 @click.option('--keywords', help='关键词列表，逗号分隔')
-def cli(file_path, action, keywords):
+@click.option('--regex', help='正则表达式模式')
+def cli(file_path, action, keywords, regex):
     """
     命令行接口
     """
@@ -144,7 +152,7 @@ def cli(file_path, action, keywords):
         keyword_list = [k.strip() for k in keywords.split(',')]
     
     # 调用处理函数
-    result = DocExtractFilter.process(file_path, action, keyword_list)
+    result = DocExtractFilter.process(file_path, action, keyword_list, regex)
     
     # 输出 JSON 格式结果
     print(json.dumps(result, ensure_ascii=False, indent=2))

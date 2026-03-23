@@ -32,7 +32,8 @@ class DocExtractFilter:
     """
     
     @staticmethod
-    def process(file_path, action, keywords=None, regex_pattern=None):
+    def process(file_path, action, keywords=None, regex_pattern=None, enable_ocr=False, 
+               exclude_keywords=None, exclude_regex=None, context_length=50, filter_level="line"):
         """
         处理文件操作
         
@@ -41,6 +42,11 @@ class DocExtractFilter:
             action: 操作类型，extract 或 filter
             keywords: 关键词列表，仅 filter 操作需要
             regex_pattern: 正则表达式模式，仅 filter 操作需要
+            enable_ocr: 是否启用 OCR 支持（用于扫描件 PDF）
+            exclude_keywords: 排除关键词列表
+            exclude_regex: 排除正则表达式模式
+            context_length: 上下文长度（默认50字符）
+            filter_level: 筛选级别，line（按行）或 paragraph（按段落）
             
         Returns:
             结构化 JSON 格式的结果
@@ -56,7 +62,7 @@ class DocExtractFilter:
                 }
             
             # 提取文本
-            extract_result = extract_text_from_file(file_path)
+            extract_result = extract_text_from_file(file_path, enable_ocr)
             
             if not extract_result["success"]:
                 return extract_result
@@ -81,7 +87,9 @@ class DocExtractFilter:
                     }
                 
                 # 筛选关键词或正则表达式
-                filter_result = filter_text(text, keywords, regex_pattern)
+                filter_result = filter_text(text, keywords, regex_pattern, 
+                                          exclude_keywords, exclude_regex, 
+                                          context_length, filter_level)
                 
                 if not filter_result["success"]:
                     return filter_result
@@ -114,7 +122,8 @@ class DocExtractFilter:
     
     @staticmethod
     def batch_process(input_dir=None, file_paths=None, action="extract", keywords=None, regex_pattern=None, 
-                     output_dir=None, merge_results=False):
+                     output_dir=None, merge_results=False, enable_ocr=False, exclude_keywords=None, 
+                     exclude_regex=None, context_length=50, filter_level="line"):
         """
         批量处理文件
         
@@ -126,6 +135,11 @@ class DocExtractFilter:
             regex_pattern: 正则表达式模式，仅 filter 操作需要
             output_dir: 输出目录
             merge_results: 是否合并所有文件结果为一个 JSON 文件
+            enable_ocr: 是否启用 OCR 支持（用于扫描件 PDF）
+            exclude_keywords: 排除关键词列表
+            exclude_regex: 排除正则表达式模式
+            context_length: 上下文长度（默认50字符）
+            filter_level: 筛选级别，line（按行）或 paragraph（按段落）
             
         Returns:
             结构化 JSON 格式的结果
@@ -145,7 +159,7 @@ class DocExtractFilter:
                     }
                 
                 # 遍历目录下所有支持的文件
-                supported_extensions = ['.pdf', '.docx', '.xlsx', '.xls', '.txt']
+                supported_extensions = ['.pdf', '.docx', '.xlsx', '.xls', '.txt', '.csv', '.md', '.wps', '.et']
                 for file_path in input_dir.rglob('*'):
                     if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
                         files_to_process.append(file_path)
@@ -189,7 +203,9 @@ class DocExtractFilter:
                 logger.info(f"开始处理文件: {file_path}")
                 
                 # 处理文件
-                result = DocExtractFilter.process(file_path, action, keywords, regex_pattern)
+                result = DocExtractFilter.process(file_path, action, keywords, regex_pattern, 
+                                               enable_ocr, exclude_keywords, exclude_regex, 
+                                               context_length, filter_level)
                 
                 if result["success"]:
                     success_files += 1
@@ -263,12 +279,18 @@ class DocExtractFilter:
 @click.option('--action', required=True, type=click.Choice(['extract', 'filter']), help='操作类型')
 @click.option('--keywords', help='关键词列表，逗号分隔')
 @click.option('--regex', help='正则表达式模式')
+@click.option('--enable-ocr', is_flag=True, help='启用 OCR 支持（用于扫描件 PDF）')
+@click.option('--exclude-keywords', help='排除关键词列表，逗号分隔')
+@click.option('--exclude-regex', help='排除正则表达式模式')
+@click.option('--context-length', type=int, default=50, help='上下文长度（默认50字符）')
+@click.option('--filter-level', type=click.Choice(['line', 'paragraph']), default='line', help='筛选级别，line（按行）或 paragraph（按段落）')
 @click.option('--batch', is_flag=True, help='开启批量处理模式')
 @click.option('--input-dir', help='批量处理的输入文件夹路径')
 @click.option('--file-paths', help='批量处理的文件列表，逗号分隔')
 @click.option('--output-dir', help='批量结果输出目录')
 @click.option('--merge-results', is_flag=True, help='是否合并所有文件结果为一个 JSON 文件')
-def cli(file_path, action, keywords, regex, batch, input_dir, file_paths, output_dir, merge_results):
+def cli(file_path, action, keywords, regex, enable_ocr, exclude_keywords, exclude_regex, 
+        context_length, filter_level, batch, input_dir, file_paths, output_dir, merge_results):
     """
     命令行接口
     """
@@ -276,6 +298,11 @@ def cli(file_path, action, keywords, regex, batch, input_dir, file_paths, output
     keyword_list = []
     if keywords:
         keyword_list = [k.strip() for k in keywords.split(',')]
+    
+    # 处理排除关键词参数
+    exclude_keyword_list = []
+    if exclude_keywords:
+        exclude_keyword_list = [k.strip() for k in exclude_keywords.split(',')]
     
     # 判断是否开启批量处理模式
     if batch:
@@ -301,7 +328,12 @@ def cli(file_path, action, keywords, regex, batch, input_dir, file_paths, output
             keywords=keyword_list,
             regex_pattern=regex,
             output_dir=output_dir,
-            merge_results=merge_results
+            merge_results=merge_results,
+            enable_ocr=enable_ocr,
+            exclude_keywords=exclude_keyword_list,
+            exclude_regex=exclude_regex,
+            context_length=context_length,
+            filter_level=filter_level
         )
     else:
         # 检查单个文件处理参数
@@ -314,7 +346,9 @@ def cli(file_path, action, keywords, regex, batch, input_dir, file_paths, output
             return
         
         # 调用单个文件处理函数
-        result = DocExtractFilter.process(file_path, action, keyword_list, regex)
+        result = DocExtractFilter.process(file_path, action, keyword_list, regex, 
+                                        enable_ocr, exclude_keyword_list, exclude_regex, 
+                                        context_length, filter_level)
     
     # 输出 JSON 格式结果
     print(json.dumps(result, ensure_ascii=False, indent=2))

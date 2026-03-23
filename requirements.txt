@@ -2,5 +2,13 @@ PyPDF2
 python-docx
 openpyxl
 click
-pytest
 tqdm
+# 新增依赖
+python-markdown  # 用于 Markdown 文件处理
+beautifulsoup4  # 用于从 HTML 中提取文本
+# 可选依赖（用于 OCR 功能）
+pytesseract; python_version >= "3.6"  # 用于 OCR 文字识别
+pdf2image; python_version >= "3.6"  # 用于将 PDF 转换为图像
+Pillow; python_version >= "3.6"  # 用于图像处理
+# 测试依赖
+pytest  # 用于单元测试
